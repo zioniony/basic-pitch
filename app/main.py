@@ -16,7 +16,7 @@ import subprocess
 import tempfile
 import uuid
 
-from typing import Optional
+from typing import Annotated, Optional
 
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import JSONResponse, Response
@@ -99,6 +99,9 @@ def run_conversion(
     onset_threshold: float,
     frame_threshold: float,
     min_note_length: float,
+    min_frequency: Optional[float],
+    max_frequency: Optional[float],
+    midi_tempo: float,
 ) -> bytes:
     """Run basic-pitch on a local file and return the MIDI bytes."""
     wav_path = normalize_to_wav(audio_path)
@@ -109,6 +112,9 @@ def run_conversion(
             onset_threshold=onset_threshold,
             frame_threshold=frame_threshold,
             minimum_note_length=min_note_length,
+            minimum_frequency=min_frequency,
+            maximum_frequency=max_frequency,
+            midi_tempo=midi_tempo,
         )
     except Exception as exc:
         logger.exception("Conversion failed")
@@ -135,9 +141,12 @@ async def healthz():
 @app.post("/convert")
 async def convert(
     file: UploadFile = File(...),
-    onset_threshold: float = Form(0.5),
-    frame_threshold: float = Form(0.3),
-    min_note_length: float = Form(127.70),
+    onset_threshold: Annotated[float, Form(ge=0.05, le=0.95)] = 0.5,
+    frame_threshold: Annotated[float, Form(ge=0.05, le=0.95)] = 0.3,
+    min_note_length: Annotated[float, Form(ge=3, le=50)] = 11,
+    min_pitch: Annotated[float, Form(ge=0, le=2000)] = 0,
+    max_pitch: Annotated[float, Form(ge=40, le=3000)] = 3000,
+    midi_tempo: Annotated[float, Form(ge=24, le=224)] = 120,
 ):
     """Convert an uploaded audio file to MIDI entirely on this machine."""
     original_name = pathlib.Path(file.filename or "audio").name
@@ -163,6 +172,9 @@ async def convert(
             onset_threshold=onset_threshold,
             frame_threshold=frame_threshold,
             min_note_length=min_note_length,
+            min_frequency=min_pitch if min_pitch > 0 else None,
+            max_frequency=max_pitch,
+            midi_tempo=midi_tempo,
         )
     finally:
         # Clean up the uploaded audio and any normalized wav immediately. We

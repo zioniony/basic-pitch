@@ -11,6 +11,9 @@ const advanced = document.getElementById("advanced");
 const onset = document.getElementById("onset");
 const frame = document.getElementById("frame");
 const minlen = document.getElementById("minlen");
+const minpitch = document.getElementById("minpitch");
+const maxpitch = document.getElementById("maxpitch");
+const tempo = document.getElementById("tempo");
 
 const panels = {
     input: document.getElementById("panel-input"),
@@ -64,7 +67,10 @@ advancedToggle.addEventListener("click", () => {
 });
 onset.addEventListener("input", () => (document.getElementById("onset-val").textContent = Number(onset.value).toFixed(2)));
 frame.addEventListener("input", () => (document.getElementById("frame-val").textContent = Number(frame.value).toFixed(2)));
-minlen.addEventListener("input", () => (document.getElementById("minlen-val").textContent = Number(minlen.value).toFixed(2)));
+minlen.addEventListener("input", () => (document.getElementById("minlen-val").textContent = String(minlen.value)));
+minpitch.addEventListener("input", () => (document.getElementById("minpitch-val").textContent = String(minpitch.value)));
+maxpitch.addEventListener("input", () => (document.getElementById("maxpitch-val").textContent = String(maxpitch.value)));
+tempo.addEventListener("input", () => (document.getElementById("tempo-val").textContent = String(tempo.value)));
 
 // ---- 拖拽 / 选择文件 ----
 dropzone.addEventListener("click", () => fileInput.click());
@@ -178,6 +184,9 @@ function submitFile(file) {
     form.append("onset_threshold", onset.value);
     form.append("frame_threshold", frame.value);
     form.append("min_note_length", minlen.value);
+    form.append("min_pitch", minpitch.value);
+    form.append("max_pitch", maxpitch.value);
+    form.append("midi_tempo", tempo.value);
 
     fetch("/convert", { method: "POST", body: form })
         .then(async (resp) => {
