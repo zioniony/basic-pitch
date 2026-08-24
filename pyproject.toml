@@ -1,9 +1,28 @@
 [project]
 name = "basic-pitch-local"
 version = "0.1.0"
-description = "Add your description here"
-readme = "README.md"
+description = "Local audio-to-MIDI converter built on basic-pitch, FastAPI and Jinja2. All processing stays on your machine."
 requires-python = ">=3.11"
 dependencies = [
     "basic-pitch[tf]>=0.4.0",
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.30.0",
+    "jinja2>=3.1.0",
+    "python-multipart>=0.0.9",
+    # TensorFlow 2.14 (pulled in by basic-pitch[tf]) is built against NumPy 1.x
+    # and crashes with NumPy 2.x. Pin until basic-pitch ships a TF >= 2.16 build.
+    "numpy<2",
+    # resampy (transitive dep of basic-pitch) imports pkg_resources at runtime.
+    # pkg_resources was removed in setuptools 81+; pin a version that still ships it.
+    "setuptools>=69,<81",
 ]
+
+[project.scripts]
+basic-pitch-local = "app.main:run"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["app"]
