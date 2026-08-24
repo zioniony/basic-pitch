@@ -44,13 +44,14 @@ To update Basic Pitch to the latest version, add `--upgrade` to the above comman
 
 #### Compatible Environments:
 - MacOS, Windows and Ubuntu operating systems
-- Python versions 3.7, 3.8, 3.9, 3.10, 3.11
+- Python versions 3.10, 3.11, 3.12
 - **For Mac M1 hardware, we currently only support python version 3.10. Otherwise, we suggest using a virtual machine.**
+- **On Linux, `onnxruntime-gpu` is installed by default. Inference uses the CUDA `CUDAExecutionProvider` when a CUDA-capable GPU and drivers are available, and transparently falls back to `CPUExecutionProvider` otherwise.**
 
 
 ### Model Runtime
 
-Basic Pitch comes with the original TensorFlow model and the TensorFlow model converted to [CoreML](https://developer.apple.com/documentation/coreml), [TensorFlowLite](https://www.tensorflow.org/lite), and [ONNX](https://onnx.ai/). By default, Basic Pitch will _not_ install TensorFlow as a dependency *unless you are using Python>=3.11*. Instead, by default, CoreML will be installed on MacOS, TensorFlowLite will be installed on Linux and ONNX will be installed on Windows. If you want to install TensorFlow along with the default model inference runtime, you can install TensorFlow via `pip install basic-pitch[tf]`.
+Basic Pitch comes with the original TensorFlow model and the TensorFlow model converted to [CoreML](https://developer.apple.com/documentation/coreml), [TensorFlowLite](https://www.tensorflow.org/lite), and [ONNX](https://onnx.ai/). By default, Basic Pitch will _not_ install TensorFlow as a dependency. Instead, by default, CoreML will be installed on MacOS, the CUDA-enabled `onnxruntime-gpu` will be installed on Linux, and ONNX will be installed on Windows. If you want to install TensorFlow along with the default model inference runtime, you can install TensorFlow via `pip install basic-pitch[tf]`.
 
 ## Usage
 
