@@ -137,7 +137,12 @@ def run_conversion(
 
 
 def merge_midi_notes(midi: pretty_midi.PrettyMIDI, gap_s: float) -> None:
-    """Merge same-pitch notes separated by < gap_s seconds, in place."""
+    """Merge same-pitch notes separated by < gap_s seconds, in place.
+
+    Approximates the official site's "note segmentation" merging: basic-pitch
+    emits many short fragmented notes per pitch; merging same-pitch notes that
+    are separated by a small gap (< gap_s) yields fewer, longer notes.
+    """
     for inst in midi.instruments:
         by_pitch: dict[int, list[tuple[float, float, float]]] = {}
         for n in inst.notes:
