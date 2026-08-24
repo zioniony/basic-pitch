@@ -177,13 +177,13 @@ async def healthz():
 @app.post("/convert")
 async def convert(
     file: UploadFile = File(...),
-    onset_threshold: Annotated[float, Form(ge=0.05, le=0.95)] = 0.5,
-    frame_threshold: Annotated[float, Form(ge=0.05, le=0.95)] = 0.3,
+    onset_threshold: Annotated[float, Form(ge=0.05, le=0.95)] = 0.7,
+    frame_threshold: Annotated[float, Form(ge=0.05, le=0.95)] = 0.65,
     min_note_length: Annotated[float, Form(ge=3, le=50)] = 11,
     min_pitch: Annotated[float, Form(ge=0, le=2000)] = 0,
     max_pitch: Annotated[float, Form(ge=40, le=3000)] = 3000,
     midi_tempo: Annotated[float, Form(ge=24, le=224)] = 120,
-    note_seg_threshold: Annotated[float, Form(ge=0.05, le=0.95)] = 0.5,
+    note_seg_threshold: Annotated[float, Form(ge=0.05, le=0.95)] = 0.2,
 ):
     """Convert an uploaded audio file to MIDI entirely on this machine."""
     original_name = pathlib.Path(file.filename or "audio").name

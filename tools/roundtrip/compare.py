@@ -44,7 +44,7 @@ def compare(gt_path, det_path, onset_tol=0.05, pitch_tol=0):
     missed = [i for i in range(len(gt)) if i not in matched_set]
     extra = [i for i in range(len(det)) if i not in det_used_set]
 
-    onset_deltas = [det[j][1] - gt[i][0] for i, j in matched]
+    onset_deltas = [det[j][1] - gt[i][1] for i, j in matched]
     offset_deltas = [det[j][2] - gt[i][2] for i, j in matched]
     def med(xs): return sorted(xs)[len(xs)//2] if xs else 0.0
     def mean(xs): return sum(xs)/len(xs) if xs else 0.0
