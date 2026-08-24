@@ -4,7 +4,13 @@ Basic Pitch welcomes your contributions!
 
 ## Getting Started
 
-To get your environment set up to build `basic-pitch`, you'll need Python and Pip installed on your machine.
+To get your environment set up to build `basic-pitch`, you'll need [uv](https://docs.astral.sh/uv/) installed on your machine.
+
+Install uv (if you don't have it already):
+
+```shell
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
 
 We recommend first installing the following non-python dependencies:
 
@@ -13,14 +19,15 @@ We recommend first installing the following non-python dependencies:
     - To install on Windows, run `choco install libsndfile` using [Chocolatey](https://chocolatey.org/)
     - To install on Ubuntu, run `sudo apt-get update && sudo apt-get install --no-install-recommends -y --fix-missing pkg-config libsndfile1`
 - [ffmpeg](https://ffmpeg.org/) is a complete, cross-platform solution to record, convert and stream audio in all `basic-pitch` supported formats
-- [sox](https://sourceforge.net/projects/sox/) is a general purpose sound processing utility library used to process and transform training data used for training the `basic-pitch` model. 
+- [sox](https://sourceforge.net/projects/sox/) is a general purpose sound processing utility library used to process and transform training data used for training the `basic-pitch` model.
 
-To compile a debug build of `basic-pitch` that allows using a debugger (like gdb or lldb), use the following command to build the package locally and install a symbolic link for debugging:
+To set up your local development environment, run:
+
 ```shell
-python3 setup.py build develop
+uv sync --all-extras --dev
 ```
 
-Then, you can `import basic_pitch` from Python (or run the tests with `tox`) to test out your local changes.
+This will create a `.venv` with the project installed in editable mode along with all dev dependencies. You can then `import basic_pitch` from Python or run the tests with `uv run pytest`.
 
 ## Workflow
 
@@ -37,10 +44,26 @@ We follow the [GitHub Flow Workflow](https://guides.github.com/introduction/flow
 
 ## Testing
 
-We use `tox` for testing - running tests from end-to-end should be as simple as:
+We use `uv` and `pytest` for testing - running tests from end-to-end should be as simple as:
 
+```shell
+uv run pytest
 ```
-tox
+
+Additional useful commands:
+
+```shell
+# Format code
+uv run black basic_pitch tests --line-length 120
+
+# Lint
+uv run flake8 basic_pitch tests
+
+# Type check
+uv run mypy basic_pitch tests --strict --ignore-missing-imports --allow-subclassing-any
+
+# Build the package
+uv build
 ```
 
 ## Style

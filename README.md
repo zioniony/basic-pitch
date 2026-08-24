@@ -42,6 +42,10 @@ If, for whatever reason, you're not yet completely inspired, or you're just like
 
 To update Basic Pitch to the latest version, add `--upgrade` to the above command.
 
+Alternatively, you can use [uv](https://docs.astral.sh/uv/) to manage your environment:
+
+    uv pip install basic-pitch
+
 #### Compatible Environments:
 - MacOS, Windows and Ubuntu operating systems
 - Python versions 3.10, 3.11, 3.12

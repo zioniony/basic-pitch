@@ -141,7 +141,7 @@ cython_debug/
 **/.DS_Store
 
 # pyenv
-.python-version
+# .python-version is tracked for uv
 
 # junit
 junit.xml
