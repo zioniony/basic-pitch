@@ -181,7 +181,7 @@ function submitFile(file) {
 
     const form = new FormData();
     form.append("file", file);
-    form.append("onset_threshold", onset.value);
+    form.append("note_seg_threshold", onset.value);
     form.append("frame_threshold", frame.value);
     form.append("min_note_length", minlen.value);
     form.append("min_pitch", minpitch.value);

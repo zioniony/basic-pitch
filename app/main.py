@@ -32,6 +32,8 @@ os.environ.setdefault("TF_ENABLE_ONEDNN_OPTS", "0")
 from basic_pitch import ICASSP_2022_MODEL_PATH  # noqa: E402
 from basic_pitch.inference import Model, predict  # noqa: E402
 
+import pretty_midi  # noqa: E402
+
 logger = logging.getLogger("basic_pitch_local")
 
 BASE_DIR = pathlib.Path(__file__).resolve().parent
@@ -102,6 +104,7 @@ def run_conversion(
     min_frequency: Optional[float],
     max_frequency: Optional[float],
     midi_tempo: float,
+    note_seg_threshold: float,
 ) -> bytes:
     """Run basic-pitch on a local file and return the MIDI bytes."""
     wav_path = normalize_to_wav(audio_path)
@@ -120,9 +123,37 @@ def run_conversion(
         logger.exception("Conversion failed")
         raise HTTPException(status_code=422, detail=f"Conversion failed: {exc}") from exc
 
+    # Approximate the official site's "note segmentation" post-processing:
+    # the model emits many short fragmented notes per pitch; merge same-pitch
+    # notes that are separated by a small gap (< merge_gap_s). A higher
+    # note_seg_threshold -> more aggressive merging (fewer, longer notes).
+    merge_gap_s = note_seg_threshold * 0.12  # 0.5 -> 60 ms gap
+    if merge_gap_s > 0:
+        merge_midi_notes(midi_data, merge_gap_s)
+
     buf = io.BytesIO()
     midi_data.write(buf)
     return buf.getvalue()
+
+
+def merge_midi_notes(midi: pretty_midi.PrettyMIDI, gap_s: float) -> None:
+    """Merge same-pitch notes separated by < gap_s seconds, in place."""
+    for inst in midi.instruments:
+        by_pitch: dict[int, list[tuple[float, float, float]]] = {}
+        for n in inst.notes:
+            by_pitch.setdefault(n.pitch, []).append((n.start, n.end, n.velocity))
+        merged: list[tuple[float, float, int, int]] = []
+        for pitch, lst in by_pitch.items():
+            for s, e, v in sorted(lst):
+                if merged and pitch == merged[-1][3] and s - merged[-1][1] <= gap_s:
+                    prev_s, prev_e, prev_v, prev_p = merged[-1]
+                    merged[-1] = (prev_s, max(prev_e, e), int((prev_v + v) / 2), prev_p)
+                else:
+                    merged.append((s, e, int(v), pitch))
+        inst.notes = [
+            pretty_midi.Note(velocity=v, pitch=p, start=s, end=e)
+            for s, e, v, p in merged
+        ]
 
 
 # ---------------------------------------------------------------------------
@@ -147,6 +178,7 @@ async def convert(
     min_pitch: Annotated[float, Form(ge=0, le=2000)] = 0,
     max_pitch: Annotated[float, Form(ge=40, le=3000)] = 3000,
     midi_tempo: Annotated[float, Form(ge=24, le=224)] = 120,
+    note_seg_threshold: Annotated[float, Form(ge=0.05, le=0.95)] = 0.5,
 ):
     """Convert an uploaded audio file to MIDI entirely on this machine."""
     original_name = pathlib.Path(file.filename or "audio").name
@@ -175,6 +207,7 @@ async def convert(
             min_frequency=min_pitch if min_pitch > 0 else None,
             max_frequency=max_pitch,
             midi_tempo=midi_tempo,
+            note_seg_threshold=note_seg_threshold,
         )
     finally:
         # Clean up the uploaded audio and any normalized wav immediately. We
