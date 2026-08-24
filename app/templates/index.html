@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Basic Pitch Local · 音乐转 MIDI</title>
-    <link rel="stylesheet" href="{{ url_for('static', path='style.css') }}">
+    <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
     <header class="nav">
@@ -27,62 +27,100 @@
             所有处理都在 <strong>你自己的机器</strong> 上完成 —— 音频不会被上传到任何服务器或网络。
         </p>
 
-        <ol class="steps">
-            <li><span>1</span>点按录音按钮对着电脑哼一段旋律，或拖入任意单乐器录音（钢琴、吉他、木琴等）。</li>
-            <li><span>2</span>随后即可得到对应的 MIDI 版本。就这么简单。</li>
-            <li><span>3</span>下载 MIDI 文件，到你喜欢的数字音频工作站里精修与修正。</li>
+        <ol class="stepper" aria-label="转换流程">
+            <li class="step active" data-step="1">
+                <span class="step-num">1</span><span class="step-label">选择音频</span>
+            </li>
+            <li class="step" data-step="2">
+                <span class="step-num">2</span><span class="step-label">转换</span>
+            </li>
+            <li class="step" data-step="3">
+                <span class="step-num">3</span><span class="step-label">下载</span>
+            </li>
         </ol>
 
-        <div id="dropzone" class="dropzone" tabindex="0" role="button" aria-label="选择音频文件">
-            <div class="dz-inner">
-                <svg class="dz-icon" viewBox="0 0 24 24" aria-hidden="true">
-                    <path d="M12 16V4m0 0L8 8m4-4l4 4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-                    <path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
-                </svg>
-                <p class="dz-title">把音频文件拖到这里，或点击选择</p>
-                <p class="dz-sub">支持 .wav / .mp3 / .m4a / .flac / .ogg 等</p>
-                <input id="file-input" type="file" accept=".wav,.mp3,.m4a,.aac,.flac,.ogg,.webm,.opus,.aiff,.aif,.wma,audio/*" hidden>
+        <!-- 第 1 步：选择音频（上传或录音） -->
+        <section id="panel-input" class="panel">
+            <div id="dropzone" class="dropzone" tabindex="0" role="button" aria-label="选择音频文件">
+                <div class="dz-inner">
+                    <svg class="dz-icon" viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M12 16V4m0 0L8 8m4-4l4 4" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" stroke="currentColor" stroke-width="1.6" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+                    </svg>
+                    <p class="dz-title">把音频文件拖到这里，或点击选择</p>
+                    <p class="dz-sub">支持 .wav / .mp3 / .m4a / .flac / .ogg 等</p>
+                    <input id="file-input" type="file" accept=".wav,.mp3,.m4a,.aac,.flac,.ogg,.webm,.opus,.aiff,.aif,.wma,audio/*" hidden>
+                </div>
             </div>
-        </div>
 
-        <div class="actions">
-            <button id="record-btn" class="btn btn-ghost" type="button">
-                <span class="rec-dot"></span>
-                <span class="rec-label">录音</span>
-            </button>
-            <button id="advanced-toggle" class="btn btn-ghost" type="button" aria-expanded="false">高级选项</button>
-        </div>
+            <div class="actions">
+                <button id="record-btn" class="btn btn-ghost" type="button">
+                    <span class="rec-dot"></span>
+                    <span class="rec-label">录音</span>
+                </button>
+                <button id="advanced-toggle" class="btn btn-ghost" type="button" aria-expanded="false">高级选项</button>
+            </div>
 
-        <section id="advanced" class="advanced" hidden>
-            <div class="field">
-                <label for="onset">起音阈值 onset <span id="onset-val">0.50</span></label>
-                <input id="onset" type="range" min="0" max="1" step="0.01" value="0.5">
-            </div>
-            <div class="field">
-                <label for="frame">帧阈值 frame <span id="frame-val">0.30</span></label>
-                <input id="frame" type="range" min="0" max="1" step="0.01" value="0.3">
-            </div>
-            <div class="field">
-                <label for="minlen">最短音符 ms <span id="minlen-val">127.70</span></label>
-                <input id="minlen" type="range" min="10" max="500" step="0.1" value="127.7">
+            <section id="advanced" class="advanced" hidden>
+                <div class="field">
+                    <label for="onset">起音阈值 onset <span id="onset-val">0.50</span></label>
+                    <input id="onset" type="range" min="0" max="1" step="0.01" value="0.5">
+                </div>
+                <div class="field">
+                    <label for="frame">帧阈值 frame <span id="frame-val">0.30</span></label>
+                    <input id="frame" type="range" min="0" max="1" step="0.01" value="0.3">
+                </div>
+                <div class="field">
+                    <label for="minlen">最短音符 ms <span id="minlen-val">127.70</span></label>
+                    <input id="minlen" type="range" min="10" max="500" step="0.1" value="127.7">
+                </div>
+            </section>
+        </section>
+
+        <!-- 录音中 -->
+        <section id="panel-recording" class="panel" hidden>
+            <div class="recording-card">
+                <p class="rec-title"><span class="rec-dot"></span>正在录音 <span id="rec-time" class="rec-time">00:00</span></p>
+                <p class="rec-sub">对着电脑哼一段旋律，完成后点击「停止并转换」。</p>
+                <div class="actions">
+                    <button id="stop-btn" class="btn btn-primary" type="button">停止并转换</button>
+                    <button id="cancel-btn" class="btn btn-ghost" type="button">取消</button>
+                </div>
             </div>
         </section>
 
-        <div id="status" class="status" hidden>
-            <div class="spinner" aria-hidden="true"></div>
-            <div class="status-text">
-                <p id="status-title">转换中…</p>
-                <p id="status-sub">首次运行需要加载模型，可能需要几十秒。</p>
+        <!-- 第 2 步：转换中 -->
+        <section id="panel-converting" class="panel" hidden>
+            <div class="status">
+                <div class="spinner" aria-hidden="true"></div>
+                <div class="status-text">
+                    <p id="status-title" class="status-title">转换中…</p>
+                    <p id="status-sub" class="status-sub">首次运行需要加载模型，可能需要几十秒。</p>
+                    <p id="status-file" class="status-file"></p>
+                </div>
             </div>
-        </div>
+        </section>
 
-        <div id="error" class="error" hidden></div>
+        <!-- 第 3 步：下载 -->
+        <section id="panel-result" class="panel" hidden>
+            <div class="result">
+                <p class="result-title">完成 🎉</p>
+                <p id="result-file" class="result-sub"></p>
+                <a id="download" class="btn btn-primary" download>下载 MIDI 文件</a>
+                <button id="reset" class="btn btn-ghost" type="button">再转一个</button>
+            </div>
+        </section>
 
-        <div id="result" class="result" hidden>
-            <p class="result-title">完成 🎉</p>
-            <a id="download" class="btn btn-primary" download>下载 MIDI 文件</a>
-            <button id="reset" class="btn btn-ghost" type="button">再转一个</button>
-        </div>
+        <!-- 出错 -->
+        <section id="panel-error" class="panel" hidden>
+            <div class="error-card">
+                <p class="error-title">出错了</p>
+                <p id="error-text" class="error-text"></p>
+            </div>
+            <div class="actions">
+                <button id="back-btn" class="btn btn-primary" type="button">返回重试</button>
+            </div>
+        </section>
 
         <p class="privacy">
             ⓘ 你的音频不会被保存或上传。一切都在本机处理。
@@ -93,6 +131,6 @@
         <span>Powered by <a href="https://github.com/spotify/basic-pitch" target="_blank" rel="noopener">basic-pitch</a> · FastAPI · Jinja2</span>
     </footer>
 
-    <script src="{{ url_for('static', path='app.js') }}"></script>
+    <script src="/static/app.js"></script>
 </body>
 </html>
