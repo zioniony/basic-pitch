@@ -1,0 +1,18 @@
+{
+  "config": {
+    "id": "C",
+    "onset": 0.7,
+    "frame": 0.75,
+    "minlen": 11,
+    "seg": 0.3
+  },
+  "aggregate": {
+    "n_files": 176,
+    "mean_recall": 0.7452575912131887,
+    "mean_precision": 0.8835447486460631,
+    "mean_f": 0.7899049707889968,
+    "matched": 144453,
+    "missed": 74976,
+    "extra": 19066
+  }
+}

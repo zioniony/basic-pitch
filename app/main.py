@@ -223,7 +223,9 @@ async def convert(
             except OSError:
                 pass
 
-    safe_stem = "".join(c if c.isalnum() or c in "-_" else "_" for c in stem) or "audio"
+    # Keep header-only characters ASCII (header values must be latin-1 encodable;
+    # e.g. CJK filenames would raise UnicodeEncodeError otherwise).
+    safe_stem = "".join(c if (c.isascii() and (c.isalnum() or c in "-_")) else "_" for c in stem) or "audio"
     return Response(
         content=midi_bytes,
         media_type="audio/midi",

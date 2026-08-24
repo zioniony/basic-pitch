@@ -32,17 +32,17 @@ def note_wave(pitch, vel, t_start, t_end, sr=SR):
     sig /= weights.sum()
     # ADSR-like envelope: 4ms attack, ~25% exponential decay to sustain floor,
     # gentle release near the end so the note keeps energy through note_end.
+    # Lengths are clamped to the note length n (robust to ultra-short notes).
     atk = min(n, int(round(0.004 * sr)))
     sus_frac = 0.55
     env = np.ones(n, dtype=np.float64)
     if atk > 0:
         env[:atk] = np.linspace(0.0, 1.0, atk)
-    # initial short pluck decay to sus_frac
-    ndecay = min(n, int(round(0.020 * sr)))
+    ndecay = max(0, min(n - atk, int(round(0.020 * sr))))
     if ndecay > 0:
         env[atk:atk + ndecay] = np.linspace(1.0, sus_frac, ndecay)
-    # soft release on last 15ms to avoid clicks
-    rls = min(n, int(round(0.012 * sr)))
+    # soft release on last 12ms to avoid clicks
+    rls = max(0, min(n, int(round(0.012 * sr))))
     if rls > 0:
         env[-rls:] *= np.linspace(1.0, 0.0, rls)
     amp = (vel / 127.0) ** 1.2 * 0.6

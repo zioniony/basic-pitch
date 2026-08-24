@@ -1,0 +1,33 @@
+{
+  "best_config": "B",
+  "train": {
+    "n_files": 177,
+    "mean_recall": 0.7885836088340785,
+    "mean_precision": 0.9348643461317006,
+    "mean_f": 0.84340412481983,
+    "matched": 156666,
+    "missed": 62822,
+    "extra": 12504,
+    "n_errors": 0
+  },
+  "val": {
+    "n_files": 88,
+    "mean_recall": 0.7788681837373189,
+    "mean_precision": 0.934522977695157,
+    "mean_f": 0.837163338154927,
+    "matched": 71032,
+    "missed": 32983,
+    "extra": 5913,
+    "n_errors": 0
+  },
+  "all": {
+    "n_files": 265,
+    "mean_recall": 0.7853573544623247,
+    "mean_precision": 0.9347509860471127,
+    "mean_f": 0.841331712644315,
+    "matched": 227698,
+    "missed": 95805,
+    "extra": 18417,
+    "n_errors": 0
+  }
+}
