@@ -188,7 +188,7 @@ function submitFile(file) {
     form.append("max_pitch", maxpitch.value);
     form.append("midi_tempo", tempo.value);
 
-    fetch("/convert", { method: "POST", body: form })
+    fetch("convert", { method: "POST", body: form })
         .then(async (resp) => {
             if (!resp.ok) {
                 let detail = `HTTP ${resp.status}`;
