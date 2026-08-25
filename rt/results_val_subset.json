@@ -299,23 +299,45 @@
   "by_combo": {
     "fluidsynth/base": {
       "subset": "all",
-      "mean_recall": 0.6629672375408845,
-      "mean_precision": 0.8294021296867682,
-      "mean_f": 0.7082097397072322,
-      "matched": 6441,
-      "missed": 5526,
-      "extra": 468,
+      "mean_recall": 0.6912732570387711,
+      "mean_precision": 0.9096542767218381,
+      "mean_f": 0.7541958998504981,
+      "matched": 5962,
+      "missed": 6005,
+      "extra": 560,
       "n_files": 10,
       "n_err": 0
     },
     "fluidsynth/clean": {
       "subset": "all",
-      "mean_recall": 0.6576944922451775,
-      "mean_precision": 0.8353744098549875,
-      "mean_f": 0.7066442207855557,
-      "matched": 6375,
-      "missed": 5592,
-      "extra": 416,
+      "mean_recall": 0.6646617586680847,
+      "mean_precision": 0.9145550815015835,
+      "mean_f": 0.7376857063404709,
+      "matched": 5823,
+      "missed": 6144,
+      "extra": 498,
+      "n_files": 10,
+      "n_err": 0
+    },
+    "rich/base": {
+      "subset": "all",
+      "mean_recall": 0.7005855770521451,
+      "mean_precision": 0.960582378731948,
+      "mean_f": 0.7825078698442441,
+      "matched": 6196,
+      "missed": 5771,
+      "extra": 215,
+      "n_files": 10,
+      "n_err": 0
+    },
+    "rich/clean": {
+      "subset": "all",
+      "mean_recall": 0.6961151832097544,
+      "mean_precision": 0.9642595949737001,
+      "mean_f": 0.7796119825912162,
+      "matched": 6133,
+      "missed": 5834,
+      "extra": 190,
       "n_files": 10,
       "n_err": 0
     }

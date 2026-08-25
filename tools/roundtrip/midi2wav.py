@@ -17,9 +17,20 @@ warnings.filterwarnings("ignore")
 SR = 44100
 
 FLUIDSYNTH = "/usr/bin/fluidsynth"
-# GM soundfont shipped with pretty_midi; download a nicer one and point SF_PATH
-# at it if the real-instrument feel matters more than availability.
-SF_PATH = Path(pretty_midi.__file__).parent / "TimGM6mb.sf2"
+# Real GM soundfonts installed with the `fluid-soundfont-gm` package. FluidR3
+# renders close to the real-instrument audio basic-pitch was trained on, so it
+# should help the missed-note bottleneck; fall back to the tiny TimGM6mb if it
+# is not present.
+def _pick_sf():
+    for cand in (
+        "/usr/share/sounds/sf2/FluidR3_GM.sf2",
+        "/usr/share/sounds/sf2/TimGM6mb.sf2",
+        Path(pretty_midi.__file__).parent / "TimGM6mb.sf2",
+    ):
+        if Path(cand).exists():
+            return cand
+    raise FileNotFoundError("no GM soundfont found")
+SF_PATH = _pick_sf()
 
 
 def freq(pitch: int) -> float:
