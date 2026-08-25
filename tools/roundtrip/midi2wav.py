@@ -6,6 +6,7 @@ soundfont rendered through fluidsynth. The point is to test whether audio that
 is close to what basic-pitch was trained on fixes the missed-note bottleneck.
 """
 from __future__ import annotations
+import os
 import subprocess
 import warnings
 from pathlib import Path
@@ -84,17 +85,46 @@ def _voice(t: np.ndarray, n_harm: int, rolloff: float, pitch: int, vib: float):
     return sig
 
 
+# Seconds of audio rendered per _voice() call. A whole-piece pedal note with 14
+# harmonics would otherwise allocate a ~3GB complex matrix and blow the 4GB
+# container limit mid-synthesis (leaving a torn wav).
+VOICE_CHUNK_S = 2.0
+
+
 def _stereo_to_mono_peak(wav: str) -> None:
-    """fl uidsynth emits 16-bit stereo; basic-pitch wants mono float in [-1,1].
+    """fluidsynth emits 16-bit stereo; basic-pitch wants mono float in [-1,1].
     Fold to mono (average channels) and normalize the peak so the model sees a
-    healthy, uniform level."""
+    healthy, uniform level. Rewrites ATOMICALLY: a process killed mid-write
+    must never leave a torn .wav behind (predict would then allocate from a
+    garbage header and OOM the container)."""
     data, sr = sf.read(wav, always_2d=False)
     if data.ndim > 1:
         data = data.mean(axis=1)
     peak = np.max(np.abs(data))
     if peak > 0:
         data = data / peak * 0.9
-    sf.write(wav, data.astype(np.float32), sr)
+    tmp = wav + ".tmp.wav"
+    sf.write(tmp, data.astype(np.float32), sr, format="WAV", subtype="FLOAT")
+    os.replace(tmp, wav)
+
+
+def _render_note(buf: np.ndarray, start: int, dur: float, pitch: int, vel: float,
+                 p: dict) -> None:
+    """Add one note into buf, rendering in bounded chunks so a note of ANY
+    duration costs the same peak memory."""
+    env = _envelope(dur, SR, p["atk"], p["decay"], p["sustain"], p["rel"])
+    if env.size == 0:
+        return
+    nenv = min(env.size, len(buf) - start)
+    if nenv <= 0:
+        return
+    gain = (vel / 127.0) ** 1.5
+    step = int(VOICE_CHUNK_S * SR)
+    for ofs in range(0, nenv, step):
+        k = min(step, nenv - ofs)
+        t = (np.arange(ofs, ofs + k)) / SR
+        sig = _voice(t, p["n_harm"], p["rolloff"], pitch, p["vib"])
+        buf[start + ofs:start + ofs + k] += gain * sig * env[ofs:ofs + k]
 
 
 def _synthesize(src, out, profile):
@@ -109,23 +139,15 @@ def _synthesize(src, out, profile):
             continue
         for n in inst.notes:
             start = int(n.start * SR)
-            dur = n.end - n.start
-            if dur <= 0 or start < 0:
+            if start < 0 or n.end - n.start <= 0:
                 continue
-            env = _envelope(dur, SR, p["atk"], p["decay"], p["sustain"], p["rel"])
-            if env.size == 0:
-                continue
-            nenv = min(env.size, len(buf) - start)
-            if nenv <= 0:
-                continue
-            t = np.arange(nenv) / SR
-            sig = _voice(t, p["n_harm"], p["rolloff"], n.pitch, p["vib"]) * env[:nenv]
-            gain = (n.velocity / 127.0) ** 1.5
-            buf[start:start + nenv] += gain * sig
+            _render_note(buf, start, n.end - n.start, n.pitch, n.velocity, p)
     peak = np.max(np.abs(buf))
     if peak > 0:
         buf = buf / peak * 0.9
-    sf.write(out, buf, SR)
+    tmp = str(out) + ".tmp.wav"
+    sf.write(tmp, buf, SR, format="WAV", subtype="FLOAT")
+    os.replace(tmp, str(out))
 
 
 def midi_to_wav(src: str, out: str, profile: str = "rich") -> None:

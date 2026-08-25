@@ -28,6 +28,57 @@ def load_manifest():
     return json.loads(man_f.read_text())
 
 
+def _ckpt_path(split):
+    return OUT / f"ckpt_{split}.jsonl"
+
+
+def _load_ckpt(split):
+    """Resume support: each finished file appends one JSON line keyed by rel
+    path. The sandbox OOM-kills long runs, so without this we redo everything."""
+    ck = _ckpt_path(split)
+    done = {}
+    if ck.exists():
+        for line in ck.read_text().splitlines():
+            try:
+                row = json.loads(line)
+            except json.JSONDecodeError:
+                continue  # torn write from a kill
+            done[row["rel"]] = row["results"]
+    return done
+
+
+def _append_ckpt(split, rel, results):
+    with open(_ckpt_path(split), "a") as f:
+        f.write(json.dumps({"rel": rel, "results": results}, ensure_ascii=False) + "\n")
+
+
+def _ensure_wav(src: Path, wav: Path, timbre: str) -> None:
+    """Guarantee a readable, COMPLETE wav before predict.
+
+    A process killed while sf.write() was in flight leaves a truncated file
+    that passes .exists() AND sf.info() (valid header, short data); basic_pitch
+    on a garbage-header file allocates from bogus lengths and OOMs the 4GB
+    container. So validate the DURATION against the source midi and re-render
+    anything short.
+    """
+    ok = False
+    if wav.exists():
+        try:
+            import soundfile as sf
+            import pretty_midi
+            info = sf.info(str(wav))
+            midi_dur = pretty_midi.PrettyMIDI(str(src)).get_end_time()
+            ok = info.duration >= midi_dur - 1.0
+        except Exception:
+            ok = False
+    if ok:
+        return
+    if wav.exists():
+        print(f"  torn wav detected, re-synthesizing: {wav}", flush=True)
+        wav.unlink()
+    midi_to_wav(str(src), str(wav), timbre)
+
+
 def run(split="val", timbres=("pluck", "rich"), posts=("base", "clean"), files=None):
     man = load_manifest()
     rels = files or (man["train"] + man["val"] if split == "all" else man[split])
@@ -36,20 +87,27 @@ def run(split="val", timbres=("pluck", "rich"), posts=("base", "clean"), files=N
     # rows[timbre][post] = list of compare dicts
     results = {t: {p: [] for p in posts} for t in timbres}
     errs = {t: [] for t in timbres}
+    ckpt = _load_ckpt(split)
 
     for i, rel in enumerate(rels):
+        if rel in ckpt:
+            for t in timbres:
+                for p in posts:
+                    results[t][p].append(ckpt[rel][t][p])
+            continue
         src = MIDI_ROOT / rel
+        row = {t: {p: None for p in posts} for t in timbres}
         for t in timbres:
             wav = OUT / "wav" / t / rel
             wav = wav.with_suffix(".wav")
-            if not wav.exists():
-                midi_to_wav(str(src), str(wav), t)
+            _ensure_wav(src, wav, t)
             try:
                 pm = convert_pm(model, str(wav), post="raw")  # raw detected notes
             except Exception as exc:
                 errs[t].append(rel)
                 for p in posts:
                     results[t][p].append({"error": str(exc)[:80]})
+                    row[t][p] = {"error": str(exc)[:80]}
                 continue
             for p in posts:
                 m = copy.deepcopy(pm)
@@ -57,7 +115,10 @@ def run(split="val", timbres=("pluck", "rich"), posts=("base", "clean"), files=N
                 det = OUT / "det" / p / rel
                 det.parent.mkdir(parents=True, exist_ok=True)
                 det.write_bytes(_write(m, det))
-                results[t][p].append(compare(str(src), str(det)))
+                c = compare(str(src), str(det))
+                results[t][p].append(c)
+                row[t][p] = c
+        _append_ckpt(split, rel, row)
         if (i + 1) % 20 == 0:
             print(f"  {i+1}/{len(rels)} done", flush=True)
 
