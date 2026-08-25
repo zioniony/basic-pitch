@@ -177,8 +177,12 @@ async def healthz():
 @app.post("/convert")
 async def convert(
     file: UploadFile = File(...),
-    onset_threshold: Annotated[float, Form(ge=0.05, le=0.95)] = 0.5,
-    frame_threshold: Annotated[float, Form(ge=0.05, le=0.95)] = 0.3,
+    # Defaults are the tuned config from the round-trip experiment
+    # (tools/roundtrip, 2/3 of the midi/ corpus as training data):
+    # onset=0.7 / frame=0.65 measured F=0.788 on the held-out third vs.
+    # F=0.76 for the basic-pitch defaults below (kept as the slider floors).
+    onset_threshold: Annotated[float, Form(ge=0.05, le=0.95)] = 0.7,
+    frame_threshold: Annotated[float, Form(ge=0.05, le=0.95)] = 0.65,
     min_note_length: Annotated[float, Form(ge=3, le=50)] = 11,
     min_pitch: Annotated[float, Form(ge=0, le=2000)] = 0,
     max_pitch: Annotated[float, Form(ge=40, le=3000)] = 3000,
