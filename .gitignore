@@ -148,3 +148,14 @@ junit.xml
 
 # intellij
 .idea/
+
+# Round-trip experiment: regenerable artifacts (see tools/roundtrip/README.md).
+# `make synth` rebuilds rt/wav, `make eval` rebuilds rt/det and the checkpoints.
+rt/wav/
+rt/det/
+rt/ckpt_*.jsonl
+rt/results_*_subset.json
+rt/wav.tmp/
+
+# IDE tooling scratch files
+.trae-html-share-packages/
